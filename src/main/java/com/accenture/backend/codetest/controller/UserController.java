@@ -4,6 +4,7 @@ import com.accenture.backend.codetest.model.request.UserModRequest;
 import com.accenture.backend.codetest.model.response.UserCollectionResponse;
 import com.accenture.backend.codetest.model.response.UserModResponse;
 import com.accenture.backend.codetest.service.UserService;
+import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,11 +46,14 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserModResponse> CreateUser(@RequestBody UserModRequest request)
+    public ResponseEntity<UserModResponse> CreateUser(@Valid @RequestBody UserModRequest request)
             throws ResponseStatusException {
         try {
-            if (request.getSsn() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid value for field ssn, rejected value: null" + request.getSsn());
+
+            var ssn = request.getSsn();
+
+            if (ssn == null || ssn.length() != 16) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid value for field ssn, rejected value: null" + ssn);
             }
             if (request.getFirstName() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid value for first_name, rejected value: null" + request.getSsn());
@@ -98,7 +102,7 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable("id") Integer id) {
         try {
             if (!userService.deleteUser(id)) {
-                return ResponseEntity.notFound().build();
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
             return new ResponseEntity<>("", HttpStatus.NO_CONTENT);
         } catch (Exception e) {
